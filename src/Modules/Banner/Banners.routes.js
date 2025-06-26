@@ -1,12 +1,13 @@
 import { Router } from "express";
 import { upload } from "../../middlewares/FileUpload.middlwares.js";
+
 import {
   addBanner,
   deleteBanner,
   getAllBanners,
   getBannerById,
   updateBanner,
-} from "./bannerController.js";
+} from "./banner.controler.js";
 
 const router = Router();
 

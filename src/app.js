@@ -27,7 +27,7 @@ import team from "../src/Modules/TeamMenber/TeamMember.routes.js";
 import website from "../src/Modules/WebsiteSetting/website.routes.js";
 import Product from "../src/Modules/Product/Product.routes.js";
 import dashboard from "../src/Modules/DashBoard/DashBoard.routes.js";
-import banner from "../src/Modules/Banner/banner.Routes.js";
+import banner from "../src/Modules/Banner/Banners.routes.js";
 app.use("/api/v1/admin", adminrouter);
 app.use("/api/v1/dashboard", dashboard);
 app.use("/api/v1/corporate-governance", corporate);
