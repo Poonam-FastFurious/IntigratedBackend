@@ -23,12 +23,11 @@ import adminrouter from "../src/Modules/Admin/Admin.routes.js";
 import corporate from "../src/Modules/Corporate/Corporates.routes.js";
 import finance from "../src/Modules/Financial/Finance.routes.js";
 import shareholders from "../src/Modules/ShareHolder/Shareholder.routes.js";
-import banner from "../src/Modules/Banner/banner.Routes.js";
 import team from "../src/Modules/TeamMenber/TeamMember.routes.js";
 import website from "../src/Modules/WebsiteSetting/website.routes.js";
 import Product from "../src/Modules/Product/Product.routes.js";
 import dashboard from "../src/Modules/DashBoard/DashBoard.routes.js";
-
+import banner from "../src/Modules/Banner/banner.Routes.js";
 app.use("/api/v1/admin", adminrouter);
 app.use("/api/v1/dashboard", dashboard);
 app.use("/api/v1/corporate-governance", corporate);
