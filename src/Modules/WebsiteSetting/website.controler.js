@@ -160,7 +160,6 @@ export const contactFormHandler = async (req, res) => {
   try {
     const { name, email, number, message } = req.body;
 
-   
     const websiteSettings = await WebsiteSetting.findOne();
     if (!websiteSettings) {
       return res

@@ -1,1 +1,1 @@
-export const DB_NAME = "spicesmanufacture";
+export const DB_NAME = "intigrated_db";

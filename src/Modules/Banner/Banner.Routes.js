@@ -1,32 +1,44 @@
-// import { Router } from "express";
-// import {
-//   addBanner,
-//   deleteBanner,
-//   editBanner,
-//   getAllBanners,
-  
-// } from "./Banner.controler.js";
-// import { upload } from "../../middlewares/FileUpload.middlwares.js";
+import { Router } from "express";
+import { upload } from "../../middlewares/FileUpload.middlwares.js";
+import {
+  addBanner,
+  deleteBanner,
+  getAllBanners,
+  getBannerById,
+  updateBanner,
+} from "./bannerController.js";
 
-// const router = Router();
-// router.route("/add").post(
-//   upload.fields([
-//     {
-//       name: "image",
-//       maxCount: 1,
-//     },
-//   ]),
-//   addBanner
-// );
-// router.route("/").get(getAllBanners);
-// router.route("/delete/:id").delete(deleteBanner);
-// router.route("/edit/:id").patch(
-//   upload.fields([
-//     {
-//       name: "image",
-//       maxCount: 1,
-//     },
-//   ]),
-//   editBanner
-// );
-// export default router;
+const router = Router();
+
+// Add banner
+router.route("/add").post(
+  upload.fields([
+    {
+      name: "file",
+      maxCount: 1,
+    },
+  ]),
+  addBanner
+);
+
+// Get all banners
+router.route("/").get(getAllBanners);
+
+// Update banner
+router.route("/update/:id").patch(
+  upload.fields([
+    {
+      name: "file",
+      maxCount: 1,
+    },
+  ]),
+  updateBanner
+);
+
+// Delete banner
+router.route("/:id").delete(deleteBanner);
+
+// Get banner by ID
+router.get("/:id", getBannerById);
+
+export default router;
