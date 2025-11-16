@@ -1,6 +1,5 @@
 import { Router } from "express";
 
-import { upload } from "../../middlewares/FileUpload.middlwares.js";
 import {
   addCorporateDocument,
   deleteCorporateDocument,
@@ -8,27 +7,21 @@ import {
   getCorporateDocumentById,
   getCorporateDocuments,
 } from "./CorporateGovernance.controler.js";
+import { upload } from "../../utils/uploadPDF.js";
 
 const router = Router();
-router.route("/add").post(
-  upload.fields([
-    {
-      name: "file",
-      maxCount: 20,
-    },
-  ]),
+router.post(
+  "/add",
+  upload.fields([{ name: "file", maxCount: 1 }]),
   addCorporateDocument
 );
-router.route("/").get(getCorporateDocuments);
-router.route("/update/:id").patch(
-  upload.fields([
-    {
-      name: "file",
-      maxCount: 20,
-    },
-  ]),
+
+router.patch(
+  "/update/:id",
+  upload.fields([{ name: "file", maxCount: 1 }]),
   editCorporateDocument
 );
+router.route("/").get(getCorporateDocuments);
 router.route("/:id").delete(deleteCorporateDocument);
 router.get("/:id", getCorporateDocumentById);
 

@@ -1,6 +1,5 @@
-import { uploadOnCloudinary } from "../../utils/Cloudinary.js";
+import { supabase } from "../../utils/supabase.js";
 import { ShareholderDocument } from "./ShareholderDocument.model.js";
-
 export const addShareholderDocument = async (req, res) => {
   try {
     const { title, documentType, year, quarter } = req.body;
@@ -11,48 +10,103 @@ export const addShareholderDocument = async (req, res) => {
         .json({ message: "Title and Document Type are required" });
     }
 
-    const file = req.files?.file;
-    if (!file) {
+    if (!req.files?.file) {
       return res.status(400).json({ message: "File is required" });
     }
 
-    const fileToUpload = Array.isArray(file) ? file[0] : file;
-    const fileType = fileToUpload.mimetype;
+    const file = Array.isArray(req.files.file)
+      ? req.files.file[0]
+      : req.files.file;
 
-    // Optional file size validation (e.g., 10MB max for Cloudinary free plan)
-    const MAX_FILE_SIZE = 10 * 1024 * 1024;
-    if (fileToUpload.size > MAX_FILE_SIZE) {
-      fs.unlinkSync(fileToUpload.path);
-      return res.status(400).json({ message: "Max upload size is 10MB." });
+    const original = file.originalname || "document.pdf";
+    const fileName = `${Date.now()}-${original}`;
+
+    const { error } = await supabase.storage
+      .from("intigrated")
+      .upload(fileName, file.buffer, {
+        contentType: file.mimetype,
+      });
+
+    if (error) {
+      return res.status(400).json({ message: error.message });
     }
 
-    const uploaded = await uploadOnCloudinary(fileToUpload.path, {
-      resource_type: "raw",
-      folder: "shareholder-documents",
-    });
-
-    try {
-      fs.unlinkSync(fileToUpload.path);
-    } catch (err) {
-      console.warn("Cleanup failed:", err.message);
-    }
+    const publicUrl = supabase.storage.from("intigrated").getPublicUrl(fileName)
+      .data.publicUrl;
 
     const newDoc = await ShareholderDocument.create({
       title,
       documentType,
-      fileType,
-      fileUrl: uploaded.secure_url,
+      fileType: file.mimetype,
+      fileUrl: publicUrl,
       year: year || null,
       quarter: quarter || "",
     });
 
-    res.status(201).json({
+    return res.status(201).json({
       message: "Shareholder document uploaded successfully",
       document: newDoc,
     });
-  } catch (error) {
-    console.error("Upload error:", error);
-    res.status(500).json({ message: "Internal Server Error" });
+  } catch (err) {
+    return res
+      .status(500)
+      .json({ message: "Internal Server Error", error: err.message });
+  }
+};
+export const editShareholderDocument = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { title, documentType, year, quarter } = req.body;
+
+    const doc = await ShareholderDocument.findById(id);
+    if (!doc) return res.status(404).json({ message: "Document not found" });
+
+    if (req.files?.file) {
+      const file = Array.isArray(req.files.file)
+        ? req.files.file[0]
+        : req.files.file;
+
+      const original = file.originalname || "document.pdf";
+      const newFileName = `${Date.now()}-${original}`;
+
+      const { error } = await supabase.storage
+        .from("intigrated")
+        .upload(newFileName, file.buffer, {
+          contentType: file.mimetype,
+        });
+
+      if (error) return res.status(400).json({ message: error.message });
+
+      const newUrl = supabase.storage
+        .from("intigrated")
+        .getPublicUrl(newFileName).data.publicUrl;
+
+      // Delete old file
+      if (doc.fileUrl) {
+        const oldFile = doc.fileUrl.split("/").pop();
+        await supabase.storage.from("intigrated").remove([oldFile]);
+      }
+
+      doc.fileUrl = newUrl;
+      doc.fileType = file.mimetype;
+    }
+
+    // fields update
+    doc.title = title || doc.title;
+    doc.documentType = documentType || doc.documentType;
+    doc.year = year || null;
+    doc.quarter = quarter || "";
+
+    await doc.save();
+
+    return res.status(200).json({
+      message: "Shareholder document updated successfully",
+      document: doc,
+    });
+  } catch (err) {
+    return res
+      .status(500)
+      .json({ message: "Internal Server Error", error: err.message });
   }
 };
 
@@ -78,58 +132,6 @@ export const getShareholderDocumentById = async (req, res) => {
       .json({ message: "Document retrieved successfully", document: doc });
   } catch (error) {
     console.error("Fetch by ID error:", error);
-    res.status(500).json({ message: "Internal Server Error" });
-  }
-};
-
-export const editShareholderDocument = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { title, documentType, year, quarter } = req.body;
-
-    const document = await ShareholderDocument.findById(id);
-    if (!document)
-      return res.status(404).json({ message: "Document not found" });
-
-    let fileType = document.fileType;
-    let fileUrl = document.fileUrl;
-
-    if (req.files?.file) {
-      const file = Array.isArray(req.files.file)
-        ? req.files.file[0]
-        : req.files.file;
-
-      if (file.size > 10 * 1024 * 1024) {
-        fs.unlinkSync(file.path);
-        return res.status(400).json({ message: "Max upload size is 10MB." });
-      }
-
-      const uploaded = await uploadOnCloudinary(file.path, {
-        resource_type: "raw",
-        folder: "shareholder-documents",
-      });
-
-      try {
-        fs.unlinkSync(file.path);
-      } catch (err) {
-        console.warn("Cleanup failed:", err.message);
-      }
-
-      fileType = file.mimetype;
-      fileUrl = uploaded.secure_url;
-    }
-
-    const updated = await ShareholderDocument.findByIdAndUpdate(
-      id,
-      { title, documentType, year, quarter, fileType, fileUrl },
-      { new: true }
-    );
-
-    res
-      .status(200)
-      .json({ message: "Document updated successfully", document: updated });
-  } catch (error) {
-    console.error("Edit error:", error);
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
